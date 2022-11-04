@@ -1,0 +1,10 @@
+pandas
+numpy
+Flask
+Flask-CORS
+flask-restx
+sklearn
+imbalanced-learn
+keras
+seaborn
+tensorflow
