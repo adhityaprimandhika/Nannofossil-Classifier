@@ -40,21 +40,31 @@ api_namespace = api.namespace(
 
 @api_namespace.route("/prediction", methods=["GET"])
 class PredictClass(Resource):
-    @api_namespace.doc(responses={200: "OK", 400: "Invalid Argument", 500: "Mapping Key Error"}, params={"feature_value": {"description": "Specify all data from every features. Ex: 31001110", "type": "String", "required": False}})
+    @api_namespace.doc(responses={200: "OK", 400: "Invalid Argument", 500: "Mapping Key Error"}, params={"jumlah_lengan": {"type": "String", "required": False}, "cabang_lengan": {"type": "String", "required": False}, "bentuk_morfologi": {"type": "String", "required": False}, "knob": {"type": "String", "required": False}, "ukuran_lengan": {"type": "String", "required": False}, "bentuk_lengan": {"type": "String", "required": False}, "bentuk_ujung_lengan": {"type": "String", "required": False}, "bentuk_ujung_lengan_melengkung": {"type": "String", "required": False}})
     @cross_origin()
     def get(self):
-        #parser = reqparse.RequestParser()
-        #parser.add_argument("feature_value",  required=True, default=None)
-
-        #args = parser.parse_args()
-        #feature_value = args["feature_value"] or None
-        param_value = request.args.get("feature_value")
+        
         data = []
         result = {}
-
-        for value in param_value:
-            data.append(int(value))
-
+        
+        jumlah_lengan = request.args.get("jumlah_lengan")
+        cabang_lengan = request.args.get("cabang_lengan")
+        bentuk_morfologi = request.args.get("bentuk_morfologi")
+        knob = request.args.get("knob")
+        ukuran_lengan = request.args.get("ukuran_lengan")
+        bentuk_lengan = request.args.get("bentuk_lengan")
+        bentuk_ujung_lengan = request.args.get("bentuk_ujung_lengan")
+        bentuk_ujung_lengan_melengkung = request.args.get("bentuk_ujung_lengan_melengkung")
+        
+        data.append(int(jumlah_lengan))
+        data.append(int(cabang_lengan))
+        data.append(int(bentuk_morfologi))
+        data.append(int(knob))
+        data.append(int(ukuran_lengan))
+        data.append(int(bentuk_lengan))
+        data.append(int(bentuk_ujung_lengan))
+        data.append(int(bentuk_ujung_lengan_melengkung))
+        
         print("Data")
         print(data)
         print()
@@ -71,7 +81,7 @@ class PredictClass(Resource):
         X_train, X_test, y_train, y_test = train_test_datasplit(
             X, categorized_y)
         data = np.array(data).reshape((1, 8))
-        prediction = predictor(data, X_train, X_test, y_train, y_test)
+        prediction, train_accuracy, test_accuracy = predictor(data, X_train, X_test, y_train, y_test)
         transformed_prediction = label_encoder.inverse_transform(
             prediction.argmax(1))
 
@@ -90,15 +100,17 @@ class PredictClass(Resource):
         print("Data saved")
         print()
 
-        result["Jumlah Lengan"] = str(data[0][0])
-        result["Cabang Lengan"] = str(data[0][1])
-        result["Bentuk Morfologi"] = str(data[0][2])
-        result["Knob"] = str(data[0][3])
-        result["Ukuran Lengan"] = str(data[0][4])
-        result["Bentuk Lengan"] = str(data[0][5])
-        result["Bentuk Ujung Lengan"] = str(data[0][6])
-        result["Bentuk Ujung Lengan Melengkung"] = str(data[0][7])
-        result["Prediction Class"] = str(transformed_prediction[0])
+        result["jumlah_lengan"] = str(data[0][0])
+        result["cabang_lengan"] = str(data[0][1])
+        result["bentuk_morfologi"] = str(data[0][2])
+        result["knob"] = str(data[0][3])
+        result["ukuran_lengan"] = str(data[0][4])
+        result["bentuk_lengan"] = str(data[0][5])
+        result["bentuk_ujung_lengan"] = str(data[0][6])
+        result["bentuk_ujung_lengan_melengkung"] = str(data[0][7])
+        result["prediction_class"] = str(transformed_prediction[0])
+        result["train_accuracy"] = str(train_accuracy)
+        result["test_accuracy"] = str(test_accuracy)
         print(result)
 
         return jsonify(result)
@@ -131,14 +143,12 @@ def predictor(data, X_train, X_test, y_train, y_test):
                              shuffle=True,
                              validation_data=(X_test, y_test))
 
-    model_evaluate(deep_model, X_train, X_test, y_train, y_test)
-    print()
-    plot_history(history, deep_model)
+    train_accuracy, test_accuracy = model_evaluate(deep_model, X_train, X_test, y_train, y_test)
     print()
 
     prediction = deep_model.predict(data)
 
-    return prediction
+    return prediction, train_accuracy, test_accuracy
 
 
 def model_ml():
@@ -168,30 +178,11 @@ def model_ml():
 
 
 def model_evaluate(model, X_train, X_test, y_train, y_test):
-    loss, accuracy = model.evaluate(X_train, y_train, verbose=False)
-    print("Training Accuracy: {:.4f}".format(accuracy))
-    loss, accuracy = model.evaluate(X_test, y_test, verbose=False)
-    print("Testing Accuracy:  {:.4f}".format(accuracy))
-
-
-def plot_history(history, model):
-    acc = history.history['accuracy']
-    val_acc = history.history['val_accuracy']
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
-    x = range(1, len(acc) + 1)
-
-    plt.figure(figsize=(12, 5))
-    plt.subplot(1, 3, 1)
-    plt.plot(x, acc, 'blue', label='Training acc')
-    plt.plot(x, val_acc, 'orange', label='Validation acc')
-    plt.title('Training and Validation Accuracy with {}'.format(model))
-    plt.legend()
-    plt.subplot(1, 3, 3)
-    plt.plot(x, loss, 'blue', label='Training loss')
-    plt.plot(x, val_loss, 'orange', label='Validation loss')
-    plt.title('Training and Validation Loss with {}'.format(model))
-    plt.legend()
+    train_loss, train_accuracy = model.evaluate(X_train, y_train, verbose=False)
+    print("Training Accuracy: {:.4f}".format(train_accuracy))
+    test_loss, test_accuracy = model.evaluate(X_test, y_test, verbose=False)
+    print("Testing Accuracy:  {:.4f}".format(test_accuracy))
+    return train_accuracy, test_accuracy
 
 
 if __name__ == '__main__':
