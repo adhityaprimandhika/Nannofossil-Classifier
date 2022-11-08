@@ -148,7 +148,7 @@ def predictor(data, X_train, X_test, y_train, y_test):
 
     prediction = deep_model.predict(data)
 
-    return prediction, train_accuracy, test_accuracy
+    return prediction, round(train_accuracy,2), round(test_accuracy,2)
 
 
 def model_ml():
