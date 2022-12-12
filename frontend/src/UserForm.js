@@ -31,6 +31,7 @@ export default function UserForm() {
     setPredictionResult("");
     setTrainAccuracy("");
     setTestAccuracy("");
+    setIsLoading(true);
 
     event.preventDefault();
 
@@ -76,8 +77,19 @@ export default function UserForm() {
       });
   };
 
+  const result = (
+    <Row>
+      <p>Prediction : {predictionResult}</p>
+      <p>Train Accuracy : {trainAccuracy}</p>
+      <p>Test Accuracy : {testAccuracy}</p>
+    </Row>
+  );
+
   return (
     <Container className="form">
+      <Row>
+        <br />
+      </Row>
       <Row>
         <br />
       </Row>
@@ -348,17 +360,15 @@ export default function UserForm() {
               </Row>
             </Form.Group>
           </Row>
-          <Button type="submit">Predict Class</Button>
+          <Button variant="custom" type="submit" disabled={isLoading}>
+            Predict Class
+          </Button>
         </Form>
       </Row>
       <Row>
         <p></p>
       </Row>
-      <Row>
-        <p>Prediction : {predictionResult}</p>
-        <p>Train Accuracy : {trainAccuracy}</p>
-        <p>Test Accuracy : {testAccuracy}</p>
-      </Row>
+      {isLoading ? <LoadingSpinner /> : result}
     </Container>
   );
 }
