@@ -5,6 +5,7 @@ import Button from "react-bootstrap/Button";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
+import LoadingSpinner from "./LoadingSpinner";
 
 const client = axios.create({
   baseURL: "http://localhost:5000",
@@ -23,6 +24,7 @@ export default function UserForm() {
   const [param8, setParam8] = useState(null);
   const [trainAccuracy, setTrainAccuracy] = useState(null);
   const [testAccuracy, setTestAccuracy] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const HandleSubmit = (event) => {
     console.log("HandleSubmit ran");
@@ -65,15 +67,20 @@ export default function UserForm() {
         setPredictionResult(response.data.prediction_class);
         setTrainAccuracy(response.data.train_accuracy.concat("%"));
         setTestAccuracy(response.data.test_accuracy.concat("%"));
+        setIsLoading(false);
       })
       .catch((error) => {
         setErrorMsg(error);
         console.log("Error:", errorMsg);
+        setIsLoading(false);
       });
   };
 
   return (
-    <Container>
+    <Container className="form">
+      <Row>
+        <br />
+      </Row>
       <p>Nannofossil Classifier</p>
       <Row>
         <Form onSubmit={HandleSubmit}>
@@ -349,8 +356,8 @@ export default function UserForm() {
       </Row>
       <Row>
         <p>Prediction : {predictionResult}</p>
-        <p>Train Accuracy : {trainAccuracy} </p>
-        <p>Train Accuracy : {testAccuracy}</p>
+        <p>Train Accuracy : {trainAccuracy}</p>
+        <p>Test Accuracy : {testAccuracy}</p>
       </Row>
     </Container>
   );

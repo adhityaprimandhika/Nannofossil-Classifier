@@ -1,0 +1,22 @@
+$primaryColor: #282c34;
+$accentColor: #ffffff;
+
+.App{
+    background-color: $primaryColor;
+    color: $accentColor;
+    font-size: calc(10px + 2vmin);
+
+    .form{
+        text-align: center;
+        flex-direction: column;
+        min-height: 100vh;
+        text-align: center;
+        align-items: center;
+        justify-content:center ;
+    }
+
+    .navbar-container{
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+}
