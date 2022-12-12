@@ -14,4 +14,9 @@
 .App .navbar-container {
   padding-left: 5px;
   padding-right: 5px;
+}
+.App .btn-custom {
+  color: #282c34;
+  background-color: #ffffff;
+  font-weight: 500;
 }/*# sourceMappingURL=App.css.map */
