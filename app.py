@@ -109,8 +109,8 @@ class PredictClass(Resource):
         result["bentuk_ujung_lengan"] = str(data[0][6])
         result["bentuk_ujung_lengan_melengkung"] = str(data[0][7])
         result["prediction_class"] = str(transformed_prediction[0])
-        result["train_accuracy"] = str(train_accuracy)
-        result["test_accuracy"] = str(test_accuracy)
+        result["train_accuracy"] = str(train_accuracy*100)
+        result["test_accuracy"] = str(test_accuracy*100)
         print(result)
 
         return jsonify(result)
