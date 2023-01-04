@@ -11,8 +11,11 @@ from keras.layers import Input, Dense, BatchNormalization, LeakyReLU, Dropout
 from keras.models import Model
 from keras.utils import np_utils
 import tensorflow as tf
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.metrics import balanced_accuracy_score
 
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 
 from config import config
 
@@ -69,37 +72,32 @@ class PredictClass(Resource):
         print(data)
         print()
 
-        df = load_data()
+        df, species_dict = load_data()
         X = df[["Jumlah Lengan", "Cabang Lengan", "Bentuk Morfologi", "Knob", "Ukuran Lengan",
                 "Bentuk Lengan", "Bentuk Ujung Lengan", "Bentuk Ujung Lengan Melengkung"]]
-        y = df["Class"]
+        y = df["Spesies"]
 
-        label_encoder = LabelEncoder()
-        label_encoder.fit(y)
-        encoded_y = label_encoder.transform(y)
-        categorized_y = np_utils.to_categorical(encoded_y)
         X_train, X_test, y_train, y_test = train_test_datasplit(
-            X, categorized_y)
+            X, y)
         data = np.array(data).reshape((1, 8))
-        prediction, train_accuracy, test_accuracy = predictor(data, X_train, X_test, y_train, y_test)
-        transformed_prediction = label_encoder.inverse_transform(
-            prediction.argmax(1))
+        prediction, accuracy = predictor(data, X_train, X_test, y_train, y_test)
 
         print("Data : {}".format(data[0]))
-        print("Prediction : {}".format(transformed_prediction[0]))
+        print("Prediction : {}".format(prediction))
         print()
 
-        df = df.append({"Jumlah Lengan": data[0][0], "Cabang Lengan": data[0][1],
-                        "Bentuk Morfologi": data[0][2], "Knob": data[0][3],
-                        "Ukuran Lengan": data[0][4], "Bentuk Lengan": data[0][5],
-                        "Bentuk Ujung Lengan": data[0][6], "Bentuk Ujung Lengan Melengkung": data[0][7],
-                        "Class": transformed_prediction[0]}, ignore_index=True)
+        df = df.append({"Jenis": species_dict[str(prediction[0])], "Jumlah Lengan": data[0][0], 
+                        "Cabang Lengan": data[0][1], "Bentuk Morfologi": data[0][2], 
+                        "Knob": data[0][3], "Ukuran Lengan": data[0][4], 
+                        "Bentuk Lengan": data[0][5], "Bentuk Ujung Lengan": data[0][6], 
+                        "Bentuk Ujung Lengan Melengkung": data[0][7], "Spesies": prediction[0]}, ignore_index=True)
         print("New data added")
         print()
-        df.to_csv("data/data.csv", index=False)
+        df.to_csv("data/new_web_data.csv", index=False)
         print("Data saved")
         print()
 
+        result["jenis"] = species_dict[str(prediction[0])]
         result["jumlah_lengan"] = str(data[0][0])
         result["cabang_lengan"] = str(data[0][1])
         result["bentuk_morfologi"] = str(data[0][2])
@@ -108,17 +106,25 @@ class PredictClass(Resource):
         result["bentuk_lengan"] = str(data[0][5])
         result["bentuk_ujung_lengan"] = str(data[0][6])
         result["bentuk_ujung_lengan_melengkung"] = str(data[0][7])
-        result["prediction_class"] = str(transformed_prediction[0])
-        result["train_accuracy"] = str(train_accuracy*100)
-        result["test_accuracy"] = str(test_accuracy*100)
+        result["prediction_species"] = str(prediction[0])
+        result["accuracy"] = str(accuracy*100)
         print(result)
 
         return jsonify(result)
 
 
 def load_data():
-    df = pd.read_csv("data/data.csv")
-    return df
+    xls = pd.ExcelFile("data/Data Discoaster.xlsx")
+    temp = pd.read_excel(xls, 'Sheet2')
+    
+    ind = 1
+    species_dict = {}
+    for species in temp["Jenis"]:
+        species_dict[str(ind)] = species
+        ind+=1
+        
+    df = pd.read_csv("data/new_web_data.csv")
+    return df, species_dict
 
 
 def train_test_datasplit(X, y):
@@ -129,60 +135,77 @@ def train_test_datasplit(X, y):
 
 
 def predictor(data, X_train, X_test, y_train, y_test):
-    X_train = np.array(X_train).reshape(
-        (len(X_train), np.prod(X_train.shape[1:])))
+    X_train = np.array(X_train).reshape((len(X_train), np.prod(X_train.shape[1:])))
     X_test = np.array(X_test).reshape((len(X_test), np.prod(X_test.shape[1:])))
 
-    deep_model = model_ml()
-    deep_model.compile(
-        optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    epochs = 200
-    history = deep_model.fit(X_train, y_train,
-                             epochs=epochs,
-                             batch_size=1024,
-                             shuffle=True,
-                             validation_data=(X_test, y_test))
+    autoencoder = model_ml()
+    autoencoder.compile(optimizer='adam', loss='mean_squared_error')
+    history = autoencoder.fit(X_train, X_train,
+                    epochs=500,
+                    batch_size=1024,
+                    shuffle=True,
+                    validation_data=(X_test, X_test))
 
-    train_accuracy, test_accuracy = model_evaluate(deep_model, X_train, X_test, y_train, y_test)
+    encoded_train = autoencoder.predict(X_train)
+    encoded_test = autoencoder.predict(X_test)
+    grid  = hyperparameter_tuning(encoded_train,encoded_test,y_train,y_test)
+    classifier = ExtraTreesClassifier(max_features=grid.best_params_["max_features"], criterion=grid.best_params_["criterion"], n_estimators=grid.best_params_["n_estimators"])
+    classifier.fit(encoded_train, y_train)
+    y_pred = classifier.predict(encoded_test)
+    accuracy = round(balanced_accuracy_score(y_test, y_pred),3)
+    print("Accuracy  : {}".format(accuracy))
     print()
 
-    prediction = deep_model.predict(data)
+    prediction = classifier.predict(data)
 
-    return prediction, round(train_accuracy,2), round(test_accuracy,2)
+    return prediction, accuracy
 
 
 def model_ml():
-    window_length = 8
-    input_layer = Input(shape=(window_length,))
+    encoder_input = Input(shape=(8,))
 
-    layer_1 = Dense(640)(input_layer)
-    layer_1 = BatchNormalization()(layer_1)
-    layer_1 = LeakyReLU()(layer_1)
-    layer_1 = Dropout(0.25)(layer_1)
+    encoded_layer1 = Dense(8*4)(encoder_input)
+    encoded_layer1 = LeakyReLU()(encoded_layer1)
 
-    layer_2 = Dense(320)(layer_1)
-    layer_2 = BatchNormalization()(layer_2)
-    layer_2 = LeakyReLU()(layer_2)
-    layer_2 = Dropout(0.25)(layer_2)
+    encoded_layer2 = Dense(8*2)(encoded_layer1)
+    encoded_layer2 = LeakyReLU()(encoded_layer2)
 
-    layer_3 = Dense(160)(layer_2)
-    layer_3 = BatchNormalization()(layer_3)
-    layer_3 = LeakyReLU()(layer_3)
-    layer_3 = Dropout(0.25)(layer_3)
+    encoded_layer3 = Dense(3)(encoded_layer2)
 
-    layer_4 = Dense(37, activation='softmax')(layer_3)
+    decoded_layer1 = Dense(8*2)(encoded_layer3)
+    decoded_layer1 = LeakyReLU()(decoded_layer1)
 
-    deep_model = Model(input_layer, layer_4)
+    decoded_layer2 = Dense(8*4)(decoded_layer1)
+    decoded_layer2 = LeakyReLU()(decoded_layer2)
 
-    return deep_model
+    decoded_layer3 = Dense(8, activation='linear')(decoded_layer2)
+    # This model maps an input to its reconstruction
+    autoencoder = Model(encoder_input, decoded_layer3)
+
+    # This model maps an input to its encoded representation
+    encoder = Model(encoder_input, encoded_layer3)
+    return autoencoder
 
 
-def model_evaluate(model, X_train, X_test, y_train, y_test):
-    train_loss, train_accuracy = model.evaluate(X_train, y_train, verbose=False)
-    print("Training Accuracy: {:.4f}".format(train_accuracy))
-    test_loss, test_accuracy = model.evaluate(X_test, y_test, verbose=False)
-    print("Testing Accuracy:  {:.4f}".format(test_accuracy))
-    return train_accuracy, test_accuracy
+def hyperparameter_tuning(encoded_train, encoded_test, y_train, y_test):
+    # Defining parameter range 
+    param_grid = {"n_estimators": [10,100,500,1000],
+                "criterion": ["gini", "entropy", "log_loss"],
+                "max_features": ["sqrt", "log2", None]}  
+
+    if len(encoded_train) < 60:
+        grid = GridSearchCV(ExtraTreesClassifier(), param_grid, refit = True, verbose = 3, cv = 2) 
+    elif len(encoded_train) > 60 & len(encoded_train) < 100:
+        grid = GridSearchCV(ExtraTreesClassifier(), param_grid, refit = True, verbose = 3, cv = 3)
+    else:
+        grid = GridSearchCV(ExtraTreesClassifier(), param_grid, refit = True, verbose = 3, cv = 5) 
+    
+    # Fitting the model for grid search 
+    grid.fit(encoded_train, y_train)
+    
+    # Print best parameter after tuning 
+    print(grid.best_params_) 
+    return grid
 
 
 if __name__ == '__main__':
