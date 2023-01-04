@@ -6,6 +6,7 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import LoadingSpinner from "./LoadingSpinner";
+import RangeSlider from "react-bootstrap-range-slider";
 
 const client = axios.create({
   baseURL: "http://localhost:5000",
@@ -14,7 +15,7 @@ const client = axios.create({
 export default function UserForm() {
   const [predictionResult, setPredictionResult] = React.useState(null);
   const [errorMsg, setErrorMsg] = React.useState(null);
-  const [param1, setParam1] = useState(null);
+  const [param1, setParam1] = useState(3);
   const [param2, setParam2] = useState(null);
   const [param3, setParam3] = useState(null);
   const [param4, setParam4] = useState(null);
@@ -22,15 +23,13 @@ export default function UserForm() {
   const [param6, setParam6] = useState(null);
   const [param7, setParam7] = useState(null);
   const [param8, setParam8] = useState(null);
-  const [trainAccuracy, setTrainAccuracy] = useState(null);
-  const [testAccuracy, setTestAccuracy] = useState(null);
+  const [accuracy, setAccuracy] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const HandleSubmit = (event) => {
     console.log("HandleSubmit ran");
     setPredictionResult("");
-    setTrainAccuracy("");
-    setTestAccuracy("");
+    setAccuracy("");
     setIsLoading(true);
 
     event.preventDefault();
@@ -57,18 +56,17 @@ export default function UserForm() {
       event.target.bentukUjungLenganMelengkung.value
     );
 
-    // clear all input values in the form
-    event.target.reset();
-
     client
       .get(
         `/api/prediction?jumlah_lengan=${param1}&cabang_lengan=${param2}&bentuk_morfologi=${param3}&knob=${param4}&ukuran_lengan=${param5}&bentuk_lengan=${param6}&bentuk_ujung_lengan=${param7}&bentuk_ujung_lengan_melengkung=${param8}`
       )
       .then((response) => {
-        setPredictionResult(response.data.prediction_class);
-        setTrainAccuracy(response.data.train_accuracy.concat("%"));
-        setTestAccuracy(response.data.test_accuracy.concat("%"));
+        setPredictionResult(response.data.jenis);
+        setAccuracy(response.data.accuracy.concat("%"));
         setIsLoading(false);
+        // clear all input values in the form
+        event.target.reset();
+        setParam1(3);
       })
       .catch((error) => {
         setErrorMsg(error);
@@ -80,8 +78,7 @@ export default function UserForm() {
   const result = (
     <Row>
       <p>Prediction : {predictionResult}</p>
-      <p>Train Accuracy : {trainAccuracy}</p>
-      <p>Test Accuracy : {testAccuracy}</p>
+      <p>Accuracy : {accuracy}</p>
     </Row>
   );
 
@@ -97,48 +94,23 @@ export default function UserForm() {
       <Row>
         <Form onSubmit={HandleSubmit}>
           <Row>
-            <Form.Group
-              onChange={(e) => {
-                setParam1(e.target.value);
-              }}
-            >
+            <Form.Group>
               <Row>
                 <Col>
                   <p>Jumlah Lengan</p>
                 </Col>
                 <Col>
-                  <Form.Check
-                    inline
-                    label="3"
+                  <RangeSlider
+                    value={param1}
+                    tooltip="off"
+                    min={"3"}
+                    max={"50"}
+                    onChange={(e) => {
+                      setParam1(e.target.value);
+                    }}
                     name="jumlahLengan"
-                    type="radio"
-                    id={"jumlah-lengan-3"}
-                    value="3"
                   />
-                  <Form.Check
-                    inline
-                    label="4"
-                    name="jumlahLengan"
-                    type="radio"
-                    id={"jumlah-lengan-4"}
-                    value="4"
-                  />
-                  <Form.Check
-                    inline
-                    label="5"
-                    name="jumlahLengan"
-                    type="radio"
-                    id={"jumlah-lengan-5"}
-                    value="5"
-                  />
-                  <Form.Check
-                    inline
-                    label="6"
-                    name="jumlahLengan"
-                    type="radio"
-                    id={"jumlah-lengan-6"}
-                    value="6"
-                  />
+                  <p>{param1}</p>
                 </Col>
               </Row>
             </Form.Group>
@@ -151,7 +123,7 @@ export default function UserForm() {
             >
               <Row>
                 <Col>
-                  <p>Jumlah Lengan</p>
+                  <p>Cabang Lengan</p>
                 </Col>
                 <Col>
                   <Form.Check
