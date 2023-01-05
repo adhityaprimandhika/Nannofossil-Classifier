@@ -23,6 +23,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build-complete": "react-scripts build && cd .. && pip install -r requirements.txt && flask run",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
