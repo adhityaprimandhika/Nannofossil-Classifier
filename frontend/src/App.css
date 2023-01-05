@@ -4,12 +4,28 @@
   font-size: calc(10px + 2vmin);
 }
 .App .form {
-  text-align: center;
   flex-direction: column;
   min-height: 100vh;
   text-align: center;
   align-items: center;
   justify-content: center;
+}
+.App .home {
+  flex-direction: column;
+  min-height: 100vh;
+  text-align: center;
+  align-items: center;
+  position: relative;
+}
+.App .home .col-home {
+  position: absolute;
+  top: 50%;
+}
+.App .home .col-home h1 {
+  margin-bottom: 20px;
+}
+.App .home .col-home h6 {
+  margin-bottom: 20px;
 }
 .App .navbar-container {
   padding-left: 5px;
