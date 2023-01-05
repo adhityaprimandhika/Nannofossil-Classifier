@@ -9,7 +9,7 @@ import LoadingSpinner from "../LoadingSpinner";
 import RangeSlider from "react-bootstrap-range-slider";
 
 const client = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: "https://nannofossil-classifier.herokuapp.com/",
 });
 
 export default function UserForm() {
