@@ -9,7 +9,7 @@ import LoadingSpinner from "../LoadingSpinner";
 import RangeSlider from "react-bootstrap-range-slider";
 
 const client = axios.create({
-  baseURL: "https://nannofossil-classifier.netlify.app/",
+  baseURL: "http://localhost:5000/",
 });
 
 export default function UserForm() {
