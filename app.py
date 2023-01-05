@@ -83,7 +83,7 @@ class PredictClass(Resource):
         prediction, accuracy = predictor(data, X_train, X_test, y_train, y_test)
 
         print("Data : {}".format(data[0]))
-        print("Prediction : {}".format(prediction))
+        print("Prediction : {}".format(species_dict[str(prediction[0])]))
         print()
 
         df = df.append({"Jenis": species_dict[str(prediction[0])], "Jumlah Lengan": data[0][0], 

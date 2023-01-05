@@ -5,11 +5,11 @@ import Button from "react-bootstrap/Button";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
-import LoadingSpinner from "./LoadingSpinner";
+import LoadingSpinner from "../LoadingSpinner";
 import RangeSlider from "react-bootstrap-range-slider";
 
 const client = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: "https://nannofossil-classifier.herokuapp.com/",
 });
 
 export default function UserForm() {
@@ -90,7 +90,7 @@ export default function UserForm() {
       <Row>
         <br />
       </Row>
-      <p>Nannofossil Classifier</p>
+      <h3>Nannofossil Classifier</h3>
       <Row>
         <Form onSubmit={HandleSubmit}>
           <Row>

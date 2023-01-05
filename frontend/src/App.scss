@@ -7,12 +7,29 @@ $accentColor: #ffffff;
     font-size: calc(10px + 2vmin);
 
     .form{
-        text-align: center;
         flex-direction: column;
         min-height: 100vh;
         text-align: center;
         align-items: center;
         justify-content:center ;
+    }
+    
+    .home{
+        flex-direction: column;
+        min-height: 100vh;
+        text-align: center;
+        align-items: center;
+        position: relative;
+        .col-home{
+            position: absolute;
+            top: 50%; 
+            h1{
+                margin-bottom: 20px;
+            }
+            h6{
+                margin-bottom: 20px;
+            }
+        }
     }
 
     .navbar-container{
