@@ -107,7 +107,7 @@ class PredictClass(Resource):
         result["bentuk_ujung_lengan"] = str(data[0][6])
         result["bentuk_ujung_lengan_melengkung"] = str(data[0][7])
         result["prediction_species"] = str(prediction[0])
-        result["accuracy"] = str(accuracy*100)
+        result["accuracy"] = str(round(accuracy*100,2))
         print(result)
 
         return jsonify(result)
@@ -118,8 +118,14 @@ def load_data():
     temp = pd.read_excel(xls, 'Sheet2')
     
     ind = 1
+    species_list = []
     species_dict = {}
     for species in temp["Jenis"]:
+        species_list.append(species)
+
+    species_set = set(species_list)
+
+    for species in species_set:
         species_dict[str(ind)] = species
         ind+=1
         
