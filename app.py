@@ -118,15 +118,11 @@ def load_data():
     temp = pd.read_excel(xls, 'Sheet2')
     
     ind = 1
-    species_list = []
+    species_list = df["Jenis"].unique()
     species_dict = {}
-    for species in temp["Jenis"]:
-        species_list.append(species)
 
-    species_set = set(species_list)
-
-    for species in species_set:
-        species_dict[str(ind)] = species
+    for species in species_list:
+        species_dict[ind] = species
         ind+=1
         
     df = pd.read_csv("data/new_web_data.csv")
